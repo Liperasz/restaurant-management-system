@@ -1,0 +1,7 @@
+# All .env files — NEVER committed
+.env
+**/.env
+
+# Exceptions — templates are always committed
+!.env.example
+!**/.env.example
