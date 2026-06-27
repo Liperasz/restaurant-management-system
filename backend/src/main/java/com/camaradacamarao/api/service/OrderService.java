@@ -67,9 +67,9 @@ public class OrderService {
     }
 
     public List<Order> findActive() {
-        return orderRepository.findAll().stream()
-                .filter(o -> o.getStatus() != OrderStatus.DELIVERED && o.getStatus() != OrderStatus.CANCELLED)
-                .collect(Collectors.toList());
+        return orderRepository.findByStatusNotIn(
+                List.of(OrderStatus.DELIVERED, OrderStatus.CANCELLED)
+        );
     }
 
     @Transactional

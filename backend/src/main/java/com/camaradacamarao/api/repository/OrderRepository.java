@@ -15,7 +15,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     List<Order> findByCustomerId(Long customerId);
     List<Order> findByAttendantId(Long attendantId);
     List<Order> findByStatusNot(OrderStatus status);
-
+    List<Order> findByStatusNotIn(List<OrderStatus> statuses);
     @Query("SELECT o FROM Order o JOIN FETCH o.items WHERE o.id = :id")
     Optional<Order> findByIdWithItems(@Param("id") Long id);
 }
