@@ -258,7 +258,7 @@ CUSTOMER_PASSWORD=senha_cliente
 ### `frontend/.env` — usado em desenvolvimento local (sem Docker)
 ```env
 # URL base da API
-VITE_API_URL=http://localhost:8080
+VITE_API_URL=http://localhost:8080/api
 ```
 
 > Os arquivos `.env.example` com os campos sem valor estão disponíveis em cada diretório como templates.
