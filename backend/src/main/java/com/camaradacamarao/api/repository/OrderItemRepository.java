@@ -14,4 +14,19 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
            "WHERE MONTH(oi.order.createdAt) = :month AND YEAR(oi.order.createdAt) = :year " +
            "GROUP BY oi.menuItem ORDER BY total DESC")
     List<Object[]> findTopItemsByMonth(@Param("month") int month, @Param("year") int year);
+
+    @Query("SELECT oi.menuItem, SUM(oi.quantity) as total FROM OrderItem oi " +
+           "WHERE YEAR(oi.order.createdAt) = :year " +
+           "GROUP BY oi.menuItem ORDER BY total DESC")
+    List<Object[]> findTopItemsByYear(@Param("year") int year);
+
+    @Query("SELECT oi.menuItem, SUM(oi.quantity) as total FROM OrderItem oi " +
+           "WHERE MONTH(oi.order.createdAt) = :month AND YEAR(oi.order.createdAt) = :year " +
+           "GROUP BY oi.menuItem ORDER BY total ASC")
+    List<Object[]> findLeastItemsByMonth(@Param("month") int month, @Param("year") int year);
+
+    @Query("SELECT oi.menuItem, SUM(oi.quantity) as total FROM OrderItem oi " +
+           "WHERE YEAR(oi.order.createdAt) = :year " +
+           "GROUP BY oi.menuItem ORDER BY total ASC")
+    List<Object[]> findLeastItemsByYear(@Param("year") int year);
 }
