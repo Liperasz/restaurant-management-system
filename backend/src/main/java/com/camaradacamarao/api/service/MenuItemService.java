@@ -22,6 +22,11 @@ public class MenuItemService {
         return menuItemRepository.findByActiveTrue();
     }
 
+    public MenuItem findById(Long id) {
+        return menuItemRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("MenuItem not found with id: " + id));
+    }
+
     @Transactional
     public MenuItem create(MenuItemDTO dto) {
         MenuItem menuItem = new MenuItem();

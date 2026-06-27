@@ -47,6 +47,27 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    public User registerAttendant(UserRegistrationDTO dto) {
+        if (userRepository.existsByEmail(dto.getEmail())) {
+            throw new IllegalArgumentException("Email already exists");
+        }
+        if (userRepository.existsByCpf(dto.getCpf())) {
+            throw new IllegalArgumentException("CPF already exists");
+        }
+
+        User user = new User();
+        user.setName(dto.getName());
+        user.setEmail(dto.getEmail());
+        user.setCpf(dto.getCpf());
+        user.setPhone(dto.getPhone());
+        user.setPassword(passwordEncoder.encode(dto.getPassword()));
+        user.setBirthDate(dto.getBirthDate());
+        user.setGender(dto.getGender());
+        user.setRole(Role.ATTENDANT);
+
+        return userRepository.save(user);
+    }
+
     public User findByEmail(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + email));
