@@ -6,15 +6,15 @@ const Reports = () => {
   const [leastItems, setLeastItems] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  const currentMonth = new Date().getMonth() + 1;
-  const currentYear = new Date().getFullYear();
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
   useEffect(() => {
     const fetchReports = async () => {
       try {
         const [topRes, leastRes] = await Promise.all([
-          api.get(`/reports/top-items?month=${currentMonth}&year=${currentYear}`),
-          api.get(`/reports/least-items?month=${currentMonth}&year=${currentYear}`)
+          api.get(`/reports/top-items?month=${selectedMonth}&year=${selectedYear}`),
+          api.get(`/reports/least-items?month=${selectedMonth}&year=${selectedYear}`)
         ]);
         setTopItems(topRes.data);
         setLeastItems(leastRes.data);
@@ -25,13 +25,32 @@ const Reports = () => {
       }
     };
     fetchReports();
-  }, [currentMonth, currentYear]);
+  }, [selectedMonth, selectedYear]);
 
   if (loading) return <div>Carregando relatórios...</div>;
 
   return (
     <div>
-      <h1 style={{ marginBottom: '2rem' }}>Relatórios ({currentMonth}/{currentYear})</h1>
+      <h1 style={{ marginBottom: '2rem' }}>Relatórios ({selectedMonth}/{selectedYear})</h1>
+
+      <div style={{ marginBottom: '2rem', display: 'flex', gap: '1rem' }}>
+        <div>
+          <label style={{ marginRight: '0.5rem' }}>Mês:</label>
+          <select value={selectedMonth} onChange={e => setSelectedMonth(Number(e.target.value))} className="form-input" style={{ width: 'auto' }}>
+            {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
+              <option key={m} value={m}>{m}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label style={{ marginRight: '0.5rem' }}>Ano:</label>
+          <select value={selectedYear} onChange={e => setSelectedYear(Number(e.target.value))} className="form-input" style={{ width: 'auto' }}>
+            {[2024, 2025, 2026, 2027].map(y => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
+        </div>
+      </div>
       
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
         <div className="card">
