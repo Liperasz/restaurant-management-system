@@ -29,6 +29,12 @@ public class DataSeeder implements CommandLineRunner {
     @Value("${ADMIN_PASSWORD:admin}")
     private String adminPassword;
 
+    @Value("${ATTENDANT_PASSWORD:attendant}")
+    private String attendantPassword;
+
+    @Value("${CUSTOMER_PASSWORD:customer}")
+    private String customerPassword;
+
     public DataSeeder(UserRepository userRepository,
                       MenuItemRepository menuItemRepository,
                       IngredientRepository ingredientRepository,
@@ -65,7 +71,7 @@ public class DataSeeder implements CommandLineRunner {
             attendant.setName("Atendente Padrão");
             attendant.setEmail("attendant@camaradacamarao.com");
             attendant.setCpf("11111111111");
-            attendant.setPassword(passwordEncoder.encode("attendant"));
+            attendant.setPassword(passwordEncoder.encode(attendantPassword));
             attendant.setRole(Role.ATTENDANT);
             attendant.setGender(Gender.OTHER);
             attendant.setBirthDate(LocalDate.of(2000, 1, 1));
@@ -78,7 +84,7 @@ public class DataSeeder implements CommandLineRunner {
             customer.setName("Cliente Padrão");
             customer.setEmail("customer@camaradacamarao.com");
             customer.setCpf("22222222222");
-            customer.setPassword(passwordEncoder.encode("customer"));
+            customer.setPassword(passwordEncoder.encode(customerPassword));
             customer.setRole(Role.CUSTOMER);
             customer.setGender(Gender.OTHER);
             customer.setBirthDate(LocalDate.of(2000, 1, 1));

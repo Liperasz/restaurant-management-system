@@ -13,23 +13,11 @@ public class ReportService {
 
     private final OrderItemRepository orderItemRepository;
 
-    public List<Object[]> topItemsThisMonth() {
-        LocalDate now = LocalDate.now();
-        return orderItemRepository.findTopItemsByMonth(now.getMonthValue(), now.getYear());
+    public List<Object[]> topItemsByPeriod(int month, int year) {
+        return orderItemRepository.findTopItemsByMonth(month, year);
     }
 
-    public List<Object[]> topItemsThisYear() {
-        LocalDate now = LocalDate.now();
-        return orderItemRepository.findTopItemsByYear(now.getYear());
-    }
-
-    public List<Object[]> leastItemsThisMonth() {
-        LocalDate now = LocalDate.now();
-        return orderItemRepository.findLeastItemsByMonth(now.getMonthValue(), now.getYear());
-    }
-
-    public List<Object[]> leastItemsThisYear() {
-        LocalDate now = LocalDate.now();
-        return orderItemRepository.findLeastItemsByYear(now.getYear());
+    public List<Object[]> leastItemsByPeriod(int month, int year) {
+        return orderItemRepository.findLeastItemsByMonth(month, year);
     }
 }
