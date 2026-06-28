@@ -57,7 +57,7 @@ public class DataSeeder implements CommandLineRunner {
             User admin = new User();
             admin.setName("Administrador Padrão");
             admin.setEmail("admin@camaradacamarao.com");
-            admin.setCpf("00000000000");
+            admin.setCpf("00000000191"); // fictitious valid CPF for seed
             admin.setPassword(passwordEncoder.encode(adminPassword));
             admin.setRole(Role.ADMINISTRATOR);
             admin.setGender(Gender.OTHER);
@@ -70,7 +70,7 @@ public class DataSeeder implements CommandLineRunner {
             User attendant = new User();
             attendant.setName("Atendente Padrão");
             attendant.setEmail("attendant@camaradacamarao.com");
-            attendant.setCpf("11111111111");
+            attendant.setCpf("11144477735"); // fictitious valid CPF for seed
             attendant.setPassword(passwordEncoder.encode(attendantPassword));
             attendant.setRole(Role.ATTENDANT);
             attendant.setGender(Gender.OTHER);
@@ -83,7 +83,7 @@ public class DataSeeder implements CommandLineRunner {
             User customer = new User();
             customer.setName("Cliente Padrão");
             customer.setEmail("customer@camaradacamarao.com");
-            customer.setCpf("22222222222");
+            customer.setCpf("12345678909"); // fictitious valid CPF for seed
             customer.setPassword(passwordEncoder.encode(customerPassword));
             customer.setRole(Role.CUSTOMER);
             customer.setGender(Gender.OTHER);

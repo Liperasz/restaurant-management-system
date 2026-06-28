@@ -11,6 +11,7 @@ Sistema web completo para gestão de um restaurante, com controle de cardápio, 
 - [Banco de Dados](#banco-de-dados)
 - [API — Endpoints](#api--endpoints)
 - [Autenticação](#autenticação)
+- [Segurança](#segurança)
 - [Controle de Acesso por Perfil](#controle-de-acesso-por-perfil)
 - [Requisitos](#requisitos)
 - [Variáveis de Ambiente](#variáveis-de-ambiente)
@@ -166,17 +167,25 @@ Todas as rotas são prefixadas com `/api`.
 
 ## Autenticação
 
-A API utiliza **HTTP Basic Authentication**. Cada requisição protegida deve incluir o cabeçalho:
+A API usa **JWT (JSON Web Token)**. 
+
+O fluxo na prática:
+
+1. `POST /api/auth/login` com `{ "email": "...", "password": "..." }`
+2. Se as credenciais baterem, a API devolve `{ "token": "eyJ...", "role": "...", "email": "..." }`
+3. O frontend guarda só o token no `sessionStorage` (a senha some depois do login)
+4. A partir daí, cada requisição protegida vai com o cabeçalho:
 
 ```
-Authorization: Basic <base64(email:senha)>
+Authorization: Bearer <token>
 ```
 
-**Não há sessão no servidor** — cada requisição é autenticada de forma independente. O frontend armazena as credenciais em `sessionStorage` e as injeta automaticamente via interceptor do Axios.
+O token dura **8 horas** por padrão. Dá pra mudar isso pela variável `JWT_EXPIRATION_MS` no `backend/.env`.
 
-### Resposta de erro padrão
+### Formato de erro padrão
 
-Todos os erros seguem o formato:
+Todo erro da API segue a mesma estrutura, independente de onde veio:
+
 ```json
 {
   "status": 400,
@@ -186,6 +195,35 @@ Todos os erros seguem o formato:
   }
 }
 ```
+
+---
+
+## Segurança
+
+Antes era **HTTP Basic Auth** — o tipo mais simples de autenticação, onde o `email:senha` vai codificado em Base64 em *toda* requisição. Funciona, mas tem problemas sérios: a senha fica trafegando o tempo todo e qualquer script malicioso na página consegue ler as credenciais do `sessionStorage`.
+
+Durante o desenvolvimento, a autenticação foi migrada pra JWT e outras melhorias foram feitas junto. Segue o que mudou e por quê:
+
+**Migração para JWT**  
+A senha só vai pro servidor uma vez — no login. O servidor devolve um token assinado com HMAC-SHA256. Nas próximas requisições, só o token circula. Se o token vazar (improvável, mas possível), ele expira em 8 horas e não carrega a senha em si.
+
+**Senha nunca aparece nas respostas da API**  
+Os controllers antes retornavam as entidades JPA direto — incluindo o objeto `User` com o campo `password` (mesmo que hashado, não é informação que o cliente precisa ver). Foi adicionado `@JsonIgnore` no campo e todos os controllers foram ajustados pra devolver DTOs de resposta dedicados. Agora é impossível a senha vazar em algum endpoint de pedidos ou feedbacks.
+
+**Validação de dados de entrada**  
+O cadastro de usuário passou a ter validações tanto no frontend quanto no backend. CPF aceita só números, telefone tem limite de 11 dígitos, senha exige mínimo 6 caracteres com ao menos uma letra maiúscula. Se alguém tentar mandar uma data mal-formatada pro servidor, em vez de um erro 500 genérico, volta um 400 com mensagem clara. Essa camada extra existe porque validação só no front não é suficiente — qualquer pessoa com Postman consegue bypassar.
+
+**Transições de status de pedido controladas**  
+Antes era possível mover um pedido de qualquer status pra qualquer outro — incluindo coisas sem sentido como `DELIVERED → PENDING`. Agora existe uma máquina de estados simples: `PENDING → PREPARING → DELIVERED`, com possibilidade de cancelar em `PENDING` ou `PREPARING`. Tentar ir na direção contrária retorna 400.
+
+**Feedback só depois da entrega**  
+Um cliente conseguia enviar avaliação de um pedido que ainda estava sendo preparado. Isso foi corrigido — o sistema agora valida se o pedido está com status `DELIVERED` antes de aceitar o feedback.
+
+**Separação de responsabilidades nos services**  
+Alguns services estavam acessando repositórios de outros domínios diretamente (ex: `OrderService` injetando `UserRepository`). Isso foi ajustado pra usar os services correspondentes — `OrderService` chama `UserService`. Parece detalhe, mas facilita bastante na hora de adicionar lógica de negócio em um lugar só.
+
+**Secret JWT via variável de ambiente**  
+O `JWT_SECRET` nunca está no código. Ele vem do `backend/.env` e precisa ter pelo menos 32 caracteres. O valor padrão no repositório é um placeholder — troque antes de usar.
 
 ---
 
@@ -253,6 +291,10 @@ ADMIN_PASSWORD=senha_admin
 # Senhas dos usuários de seed (atendente e cliente de exemplo)
 ATTENDANT_PASSWORD=senha_atendente
 CUSTOMER_PASSWORD=senha_cliente
+
+# JWT — substitua JWT_SECRET por uma string aleatória forte (mín. 32 caracteres)
+JWT_SECRET=sua-chave-secreta-aqui-minimo-32-chars
+JWT_EXPIRATION_MS=28800000
 ```
 
 ### `frontend/.env` — usado em desenvolvimento local (sem Docker)
