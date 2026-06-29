@@ -42,7 +42,9 @@ public class User implements UserDetails {
     private String phone;
 
     @NotBlank
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private String password;
+
 
     @Enumerated(EnumType.STRING)
     private Gender gender;

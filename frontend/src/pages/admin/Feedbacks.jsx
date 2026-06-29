@@ -31,11 +31,11 @@ const Feedbacks = () => {
           {feedbacks.map(fb => (
             <div key={fb.id} className="card">
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <h3 className="card-title">Pedido #{fb.order.id}</h3>
+                <h3 className="card-title">Pedido #{fb.orderId}</h3>
                 <span className="badge badge-delivered" style={{ fontSize: '1rem' }}>Nota: {fb.rating}/5</span>
               </div>
               <p style={{ marginTop: '0.5rem', color: 'var(--color-text-muted)' }}>
-                <small>Por: {fb.user.name}</small>
+                <small>Por: {fb.userName}</small>
               </p>
               <p className="card-text" style={{ marginTop: '1rem', fontStyle: 'italic' }}>"{fb.comment}"</p>
               <div className="card-footer">

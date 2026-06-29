@@ -4,12 +4,13 @@ import api from '../api/client';
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser]       = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // On mount: restore session from sessionStorage if token exists
   useEffect(() => {
     const token = sessionStorage.getItem('authToken');
-    const role = sessionStorage.getItem('userRole');
+    const role  = sessionStorage.getItem('userRole');
     const email = sessionStorage.getItem('userEmail');
     if (token && role && email) {
       setUser({ token, role, email });
@@ -17,21 +18,24 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
+  /**
+   * Login flow (JWT):
+   *  1. POST /api/auth/login with { email, password }
+   *  2. Receive { token, role, email } from the server
+   *  3. Store token in sessionStorage
+   *  4. All subsequent api.* calls will inject "Authorization: Bearer <token>"
+   */
   const login = async (email, password) => {
-    const token = btoa(`${email}:${password}`);
-    // Temporarily set token for this request
+    // Call the dedicated auth endpoint — no credentials stored before validation
+    const response = await api.post('/auth/login', { email, password });
+    const { token, role } = response.data;
+
     sessionStorage.setItem('authToken', token);
-    try {
-      const response = await api.get('/users/me');
-      const role = response.data.role;
-      sessionStorage.setItem('userRole', role);
-      sessionStorage.setItem('userEmail', email);
-      setUser({ token, role, email });
-      return role;
-    } catch (error) {
-      sessionStorage.removeItem('authToken');
-      throw error;
-    }
+    sessionStorage.setItem('userRole', role);
+    sessionStorage.setItem('userEmail', email);
+
+    setUser({ token, role, email });
+    return role;
   };
 
   const logout = () => {

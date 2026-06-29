@@ -3,6 +3,7 @@ package com.camaradacamarao.api.config;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -23,13 +24,25 @@ public class GlobalExceptionHandler {
             String errorMessage = error.getDefaultMessage();
             errors.put(fieldName, errorMessage);
         });
-        
+
         Map<String, Object> response = new HashMap<>();
         response.put("status", HttpStatus.BAD_REQUEST.value());
         response.put("error", "Validation failed");
         response.put("details", errors);
-        
+
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * Captura erros de desserialização do JSON — ex: LocalDate com ano inválido (5 dígitos).
+     * Sem este handler, a exceção cai no handleGenericException e retorna HTTP 500.
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Map<String, Object>> handleHttpMessageNotReadable(HttpMessageNotReadableException ex) {
+        return buildErrorResponse(
+            HttpStatus.BAD_REQUEST,
+            "Dados inválidos: verifique o formato da data de nascimento (AAAA-MM-DD)."
+        );
     }
 
     @ExceptionHandler(EntityNotFoundException.class)

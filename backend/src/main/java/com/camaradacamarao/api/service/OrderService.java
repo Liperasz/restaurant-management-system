@@ -9,7 +9,6 @@ import com.camaradacamarao.api.model.User;
 import com.camaradacamarao.api.model.enums.OrderStatus;
 import com.camaradacamarao.api.repository.MenuItemRepository;
 import com.camaradacamarao.api.repository.OrderRepository;
-import com.camaradacamarao.api.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,12 +25,28 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final MenuItemRepository menuItemRepository;
-    private final UserRepository userRepository;
+    private final UserService userService; // P06 fix — use service, not repository
+
+    /**
+     * Valid status transitions (state machine).
+     * A status is only allowed if the current status is in its allowed predecessors.
+     *
+     * PENDING   → PREPARING, CANCELLED
+     * PREPARING → DELIVERED, CANCELLED
+     * DELIVERED → (terminal — no transitions)
+     * CANCELLED → (terminal — no transitions)
+     */
+    private static final java.util.Map<OrderStatus, Set<OrderStatus>> VALID_TRANSITIONS =
+            java.util.Map.of(
+                    OrderStatus.PENDING,   Set.of(OrderStatus.PREPARING, OrderStatus.CANCELLED),
+                    OrderStatus.PREPARING, Set.of(OrderStatus.DELIVERED, OrderStatus.CANCELLED),
+                    OrderStatus.DELIVERED, Set.of(),
+                    OrderStatus.CANCELLED, Set.of()
+            );
 
     @Transactional
     public Order create(OrderCreateDTO dto, String customerEmail) {
-        User customer = userRepository.findByEmail(customerEmail)
-                .orElseThrow(() -> new IllegalArgumentException("Customer not found"));
+        User customer = userService.findByEmail(customerEmail); // P06 — via service
 
         Order order = new Order();
         order.setCustomer(customer);
@@ -42,10 +58,12 @@ public class OrderService {
 
         for (OrderItemRequestDTO itemDto : dto.getItems()) {
             MenuItem menuItem = menuItemRepository.findById(itemDto.getMenuItemId())
-                    .orElseThrow(() -> new IllegalArgumentException("MenuItem not found with id: " + itemDto.getMenuItemId()));
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "Item do cardápio não encontrado com id: " + itemDto.getMenuItemId()));
 
             if (!menuItem.isActive()) {
-                throw new IllegalArgumentException("MenuItem is not active: " + menuItem.getName());
+                throw new IllegalArgumentException(
+                        "Item do cardápio não está disponível: " + menuItem.getName());
             }
 
             OrderItem orderItem = new OrderItem();
@@ -72,12 +90,26 @@ public class OrderService {
         );
     }
 
+    /**
+     * P04 — Validates status transitions before persisting.
+     * Prevents illegal moves like DELIVERED → PENDING.
+     */
     @Transactional
-    public Order updateStatus(Long id, OrderStatus status) {
+    public Order updateStatus(Long id, OrderStatus newStatus) {
         Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Order not found with id: " + id));
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Pedido não encontrado com id: " + id));
 
-        order.setStatus(status);
+        OrderStatus current = order.getStatus();
+        Set<OrderStatus> allowed = VALID_TRANSITIONS.getOrDefault(current, Set.of());
+
+        if (!allowed.contains(newStatus)) {
+            throw new IllegalArgumentException(
+                    "Transição de status inválida: " + current + " → " + newStatus +
+                    ". Transições permitidas a partir de " + current + ": " + allowed);
+        }
+
+        order.setStatus(newStatus);
         return orderRepository.save(order);
     }
 
