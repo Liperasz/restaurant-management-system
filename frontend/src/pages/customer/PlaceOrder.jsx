@@ -2,11 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/client';
 import MenuItemCard from '../../components/MenuItemCard';
+import SkeletonCard from '../../components/SkeletonCard';
+import { useToast } from '../../context/ToastContext';
 
 const PlaceOrder = () => {
   const [items, setItems] = useState([]);
   const [cart, setCart] = useState({}); // { menuItemId: quantity }
   const [loading, setLoading] = useState(true);
+  const { showToast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -48,18 +51,34 @@ const PlaceOrder = () => {
       quantity: cart[id]
     }));
     
-    if (orderItems.length === 0) return alert('Selecione pelo menos um item.');
+    if (orderItems.length === 0) {
+      showToast('Selecione pelo menos um item.', 'error');
+      return;
+    }
     
     try {
       await api.post('/orders', { items: orderItems });
-      alert('Pedido realizado com sucesso!');
+      showToast('Pedido realizado com sucesso!', 'success');
       navigate('/order/mine');
     } catch (error) {
-      alert('Erro ao realizar pedido.');
+      showToast('Erro ao realizar pedido.', 'error');
     }
   };
 
-  if (loading) return <div>Carregando...</div>;
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', gap: '2rem' }}>
+        <div style={{ flex: 2 }}>
+          <h1 style={{ marginBottom: '2rem' }}>Faça seu Pedido</h1>
+          <div className="card-grid">
+            {Array.from({ length: 4 }).map((_, idx) => (
+              <SkeletonCard key={idx} />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const total = Object.keys(cart).reduce((sum, id) => {
     const item = items.find(i => i.id === parseInt(id));

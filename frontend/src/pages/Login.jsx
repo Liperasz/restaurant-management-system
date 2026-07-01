@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const { login } = useAuth();
+  const { showToast } = useToast();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -14,12 +16,14 @@ const Login = () => {
     setError('');
     try {
       const role = await login(email, password);
+      showToast('Login realizado com sucesso!', 'success');
       if (role === 'CUSTOMER') navigate('/menu');
       else if (role === 'ATTENDANT') navigate('/attendant/orders');
       else if (role === 'ADMINISTRATOR') navigate('/admin/menu');
       else navigate('/');
     } catch (err) {
       setError('Credenciais inválidas. Tente novamente.');
+      showToast('Credenciais inválidas. Tente novamente.', 'error');
     }
   };
 

@@ -262,3 +262,112 @@ a {
 .badge-preparing { background-color: var(--color-secondary); color: #fff; }
 .badge-delivered { background-color: var(--color-success); color: #fff; }
 .badge-cancelled { background-color: var(--color-danger); color: #fff; }
+
+/* Shimmer Skeleton Loading */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-bg-card) 25%,
+    var(--color-border) 50%,
+    var(--color-bg-card) 75%
+  );
+  background-size: 200% 100%;
+  animation: loading-shimmer 1.5s infinite;
+  border-radius: 4px;
+}
+
+@keyframes loading-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.skeleton-title {
+  height: 1.5rem;
+  width: 70%;
+  margin-bottom: 0.75rem;
+}
+
+.skeleton-text {
+  height: 1rem;
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+
+.skeleton-text.short {
+  width: 40%;
+  margin-bottom: 1.5rem;
+}
+
+.skeleton-price {
+  height: 1.5rem;
+  width: 30%;
+}
+
+.skeleton-btn {
+  height: 2.25rem;
+  width: 90px;
+  border-radius: var(--border-radius);
+}
+
+/* Toast System styling */
+.toast-container {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  z-index: 9999;
+}
+
+.toast {
+  background-color: var(--color-bg-card);
+  color: var(--color-text);
+  padding: 1rem 1.5rem;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 300px;
+  transform: translateY(100px);
+  opacity: 0;
+  animation: toast-fade-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.toast-success {
+  border-left: 4px solid var(--color-success);
+}
+
+.toast-error {
+  border-left: 4px solid var(--color-danger);
+}
+
+.toast-info {
+  border-left: 4px solid var(--color-secondary);
+}
+
+@keyframes toast-fade-in {
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Enhanced micro-animations */
+.btn, .card {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 20px -8px rgba(217, 119, 6, 0.3);
+}
+.btn:active {
+  transform: scale(0.96);
+}
+

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../api/client';
 import OrderCard from '../../components/OrderCard';
+import SkeletonCard from '../../components/SkeletonCard';
 
 const ActiveOrders = () => {
   const [orders, setOrders] = useState([]);
@@ -32,7 +33,18 @@ const ActiveOrders = () => {
     }
   };
 
-  if (loading) return <div>Carregando pedidos ativos...</div>;
+  if (loading) {
+    return (
+      <div>
+        <h1 style={{ marginBottom: '2rem' }}>Pedidos Ativos</h1>
+        <div className="card-grid">
+          {Array.from({ length: 3 }).map((_, idx) => (
+            <SkeletonCard key={idx} />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>

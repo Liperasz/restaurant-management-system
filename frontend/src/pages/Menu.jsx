@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api/client';
 import MenuItemCard from '../components/MenuItemCard';
+import SkeletonCard from '../components/SkeletonCard';
 
 const Menu = () => {
   const [items, setItems] = useState([]);
@@ -20,7 +21,18 @@ const Menu = () => {
     fetchMenu();
   }, []);
 
-  if (loading) return <div>Carregando cardápio...</div>;
+  if (loading) {
+    return (
+      <div>
+        <h1 style={{ marginBottom: '2rem' }}>Nosso Cardápio</h1>
+        <div className="card-grid">
+          {Array.from({ length: 6 }).map((_, idx) => (
+            <SkeletonCard key={idx} />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>

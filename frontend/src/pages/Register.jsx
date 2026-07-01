@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/client';
+import { useToast } from '../context/ToastContext';
 
 // ---------------------------------------------------------------------------
 // Validation rules
@@ -54,10 +55,6 @@ const validators = {
   gender: () => '',
 };
 
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
-
 const Register = () => {
   const [formData, setFormData] = useState({
     name: '',
@@ -78,6 +75,7 @@ const Register = () => {
   // Global submit-level error (e.g. server errors)
   const [submitError, setSubmitError] = useState('');
 
+  const { showToast } = useToast();
   const navigate = useNavigate();
 
   // -------------------------------------------------------------------------
@@ -163,8 +161,10 @@ const Register = () => {
 
     try {
       await api.post('/users/register', formData);
+      showToast('Cadastro realizado com sucesso!', 'success');
       navigate('/login');
     } catch (err) {
+      showToast('Erro no cadastro. Verifique as informações fornecidas.', 'error');
       if (err.response?.data?.details) {
         // Map server-side field errors back into fieldErrors state
         const serverErrors = err.response.data.details;

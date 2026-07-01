@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../../api/client';
+import { useToast } from '../../context/ToastContext';
 
 const SubmitFeedback = () => {
   const [searchParams] = useSearchParams();
@@ -9,12 +10,14 @@ const SubmitFeedback = () => {
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
   const [error, setError] = useState('');
+  const { showToast } = useToast();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!orderId) {
       setError('ID do pedido não informado.');
+      showToast('ID do pedido não informado.', 'error');
       return;
     }
 
@@ -24,10 +27,11 @@ const SubmitFeedback = () => {
         rating: parseInt(rating),
         comment
       });
-      alert('Avaliação enviada com sucesso!');
+      showToast('Avaliação enviada com sucesso!', 'success');
       navigate('/order/mine');
     } catch (err) {
-      setError('Erro ao enviar avaliação. Você já pode ter avaliado este pedido.');
+      setError('Erro ao enviar avaliação.');
+      showToast('Erro ao enviar avaliação. Você já pode ter avaliado este pedido.', 'error');
     }
   };
 
