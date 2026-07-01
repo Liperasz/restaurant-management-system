@@ -25,7 +25,7 @@ Sistema web completo para gestão de um restaurante, com controle de cardápio, 
 ### Backend
 | Tecnologia | Versão | Função |
 |---|---|---|
-| Java | 26 | Linguagem principal |
+| Java | 21 | Linguagem principal |
 | Spring Boot | 4.1.0 | Framework web |
 | Spring Data JPA | — | ORM / acesso ao banco |
 | Spring Security | — | Autenticação e autorização |
