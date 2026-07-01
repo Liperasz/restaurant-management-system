@@ -1,10 +1,12 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { ToastProvider } from './context/ToastContext';
 import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
 
 // Public Pages
+// ... (omitting duplicate comments if any, but let's keep it complete)
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Menu from './pages/Menu';
@@ -29,7 +31,8 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <div className="app-container">
+        <ToastProvider>
+          <div className="app-container">
           <Navbar />
           <main className="main-content">
             <Routes>
@@ -65,6 +68,7 @@ function App() {
             </Routes>
           </main>
         </div>
+        </ToastProvider>
       </AuthProvider>
     </Router>
   );
