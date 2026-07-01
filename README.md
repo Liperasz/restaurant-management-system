@@ -30,9 +30,18 @@ Sistema web completo para gestão de um restaurante, com controle de cardápio, 
 | Spring Data JPA | — | ORM / acesso ao banco |
 | Spring Security | — | Autenticação e autorização |
 | Spring Validation | — | Validação de dados de entrada |
+| JJWT (io.jsonwebtoken) | 0.12.6 | Geração e validação de tokens JWT |
 | Lombok | 1.18.46 | Redução de boilerplate |
 | MySQL Connector/J | — | Driver JDBC |
 | Maven | — | Gerenciador de dependências |
+
+### Testes
+| Tecnologia | Função |
+|---|---|
+| JUnit 5 | Framework de testes unitários e de integração |
+| Mockito | Mocks e verificações em testes unitários |
+| Spring MockMvc | Testes de integração dos controllers HTTP |
+| H2 Database | Banco em memória isolado para os testes |
 
 ### Frontend
 | Tecnologia | Versão | Função |
@@ -110,6 +119,21 @@ O sistema utiliza **8 tabelas** com relacionamentos `@ManyToOne`, `@ManyToMany` 
 
 Todas as rotas são prefixadas com `/api`.
 
+### Autenticação — `/api/auth`
+| Método | Rota | Descrição | Acesso |
+|---|---|---|---|
+| `POST` | `/api/auth/login` | Realiza login e retorna o token JWT | Público |
+
+**Body da requisição:**
+```json
+{ "email": "usuario@email.com", "password": "SuaSenha123" }
+```
+
+**Resposta de sucesso (200):**
+```json
+{ "token": "eyJ...", "role": "CUSTOMER", "email": "usuario@email.com" }
+```
+
 ### Usuários — `/api/users`
 | Método | Rota | Descrição | Acesso |
 |---|---|---|---|
@@ -162,6 +186,31 @@ Todas as rotas são prefixadas com `/api`.
 |---|---|---|---|
 | `GET` | `/api/reports/top-items` | Itens mais vendidos (mês/ano) | ADMINISTRATOR |
 | `GET` | `/api/reports/least-items` | Itens menos vendidos | ADMINISTRATOR |
+
+---
+
+## Testes Automatizados
+
+O backend possui uma suíte de testes com cobertura de serviços e controllers, rodando com banco **H2 in-memory** isolado (perfil `test`).
+
+### Como executar
+
+```bash
+cd backend
+mvn test
+```
+
+### Cobertura atual
+
+| Arquivo de Teste | Tipo | Cenários cobertos |
+|---|---|---|
+| `UserServiceTest` | Unitário (Mockito) | Registro, duplicidade de e-mail/CPF, validação de idade mínima (18 anos), busca, atualização e exclusão |
+| `OrderServiceTest` | Unitário (Mockito) | Criação de pedido, item inexistente/inativo, cálculo de total, transições de status válidas e inválidas |
+| `FeedbackServiceTest` | Unitário (Mockito) | Envio de avaliação, pedido não encontrado, pedido não entregue |
+| `AuthControllerTest` | Integração (MockMvc) | Fluxo completo register → login → acesso com token, credenciais inválidas, acesso sem token |
+| `OrderControllerTest` | Integração (MockMvc) | Criação de pedido autenticado, atualização de status por atendente |
+
+> Os testes de integração usam `@Transactional` para rollback automático após cada teste, garantindo isolamento total entre execuções.
 
 ---
 
@@ -391,32 +440,104 @@ As senhas de cada usuário seed são configuradas nas variáveis `ADMIN_PASSWORD
 ```
 restaurant-management-system/
 ├── backend/                          # API Spring Boot
-│   ├── src/main/java/com/camaradacamarao/api/
-│   │   ├── config/                   # SecurityConfig, CorsConfig, GlobalExceptionHandler
-│   │   ├── controller/               # Controllers REST (UserController, OrderController, ...)
-│   │   ├── dto/                      # DTOs de entrada e saída
-│   │   ├── model/                    # Entidades JPA
-│   │   │   └── enums/                # Role, Gender, OrderStatus
-│   │   ├── repository/               # Interfaces Spring Data JPA
-│   │   └── service/                  # Lógica de negócio
-│   ├── src/main/resources/
-│   │   └── application.properties    # Configuração do Spring (lê variáveis de ambiente)
-│   ├── .env.example                  # Template de variáveis de ambiente
+│   ├── src/
+│   │   ├── main/
+│   │   │   ├── java/com/camaradacamarao/api/
+│   │   │   │   ├── config/
+│   │   │   │   │   ├── JwtConfig.java            # Geração e validação de tokens JWT
+│   │   │   │   │   ├── JwtFilter.java            # Filtro que intercepta requisições e autentica via JWT
+│   │   │   │   │   ├── SecurityConfig.java       # Configuração de rotas públicas/protegidas + CORS
+│   │   │   │   │   ├── GlobalExceptionHandler.java  # Handler global de erros (400, 404, 403, 500)
+│   │   │   │   │   ├── PasswordEncoderConfig.java   # Bean BCryptPasswordEncoder
+│   │   │   │   │   └── DataSeeder.java           # Dados iniciais criados na primeira inicialização
+│   │   │   │   ├── controller/
+│   │   │   │   │   ├── AuthController.java       # POST /api/auth/login — emite o JWT
+│   │   │   │   │   ├── UserController.java
+│   │   │   │   │   ├── MenuController.java
+│   │   │   │   │   ├── OrderController.java
+│   │   │   │   │   ├── StockController.java
+│   │   │   │   │   ├── IngredientController.java
+│   │   │   │   │   ├── FeedbackController.java
+│   │   │   │   │   └── ReportController.java
+│   │   │   │   ├── dto/                          # Objetos de transferência de dados
+│   │   │   │   │   ├── UserRegistrationDTO.java  # Entrada — cadastro (com validações Jakarta)
+│   │   │   │   │   ├── UserResponseDTO.java      # Saída — dados públicos do usuário
+│   │   │   │   │   ├── UserUpdateDTO.java
+│   │   │   │   │   ├── MenuItemDTO.java
+│   │   │   │   │   ├── OrderCreateDTO.java
+│   │   │   │   │   ├── OrderResponseDTO.java
+│   │   │   │   │   ├── OrderItemRequestDTO.java
+│   │   │   │   │   ├── OrderItemResponseDTO.java
+│   │   │   │   │   ├── StatusUpdateDTO.java
+│   │   │   │   │   ├── FeedbackDTO.java
+│   │   │   │   │   ├── FeedbackResponseDTO.java  # Saída — achata orderId e userName
+│   │   │   │   │   ├── StockDTO.java
+│   │   │   │   │   └── StockResponseDTO.java     # Saída — expõe ingredient.name e ingredient.unit
+│   │   │   │   ├── model/                        # Entidades JPA
+│   │   │   │   │   ├── User.java                 # Implementa UserDetails (Spring Security)
+│   │   │   │   │   ├── MenuItem.java
+│   │   │   │   │   ├── Order.java
+│   │   │   │   │   ├── OrderItem.java
+│   │   │   │   │   ├── Ingredient.java
+│   │   │   │   │   ├── Stock.java
+│   │   │   │   │   ├── Feedback.java
+│   │   │   │   │   └── enums/                    # Role, Gender, OrderStatus
+│   │   │   │   ├── repository/                   # Interfaces Spring Data JPA
+│   │   │   │   └── service/                      # Lógica de negócio
+│   │   │   │       ├── CustomUserDetailsService.java  # Integração com Spring Security
+│   │   │   │       ├── UserService.java
+│   │   │   │       ├── MenuItemService.java
+│   │   │   │       ├── OrderService.java
+│   │   │   │       ├── StockService.java
+│   │   │   │       ├── FeedbackService.java
+│   │   │   │       └── ReportService.java
+│   │   │   └── resources/
+│   │   │       └── application.properties        # Configuração do Spring (lê variáveis de ambiente)
+│   │   └── test/
+│   │       ├── java/com/camaradacamarao/api/
+│   │       │   ├── controller/
+│   │       │   │   ├── AuthControllerTest.java   # Integração: register → login → rota protegida
+│   │       │   │   └── OrderControllerTest.java  # Integração: criação e atualização de pedidos
+│   │       │   └── service/
+│   │       │       ├── UserServiceTest.java      # Unitário: registro, validações, CRUD
+│   │       │       ├── OrderServiceTest.java     # Unitário: criação, transições de status
+│   │       │       └── FeedbackServiceTest.java  # Unitário: envio de avaliação
+│   │       └── resources/
+│   │           └── application.properties        # H2 in-memory para testes (perfil "test")
+│   ├── .env.example
 │   ├── Dockerfile
 │   └── pom.xml
 │
-├── frontend/                         # Interface React
+├── frontend/                         # Interface React + Vite
 │   ├── src/
-│   │   ├── api/                      # Instância do Axios com interceptor de autenticação
-│   │   ├── components/               # Componentes reutilizáveis (Navbar, ProtectedRoute, ...)
-│   │   ├── context/                  # AuthContext (login, logout, perfil do usuário)
+│   │   ├── api/
+│   │   │   └── client.js             # Axios com interceptor Bearer JWT + redirecionamento em 401
+│   │   ├── components/
+│   │   │   ├── Navbar.jsx
+│   │   │   ├── ProtectedRoute.jsx    # Guarda de rota por perfil
+│   │   │   ├── MenuItemCard.jsx
+│   │   │   ├── OrderCard.jsx
+│   │   │   └── SkeletonCard.jsx      # Loading state animado (skeleton screen)
+│   │   ├── context/
+│   │   │   ├── AuthContext.jsx       # Login JWT, logout, restauração de sessão
+│   │   │   └── ToastContext.jsx      # Sistema de notificações toast (substitui alert())
 │   │   └── pages/
-│   │       ├── Login.jsx             # Tela de login
-│   │       ├── Register.jsx          # Cadastro de novo cliente
-│   │       ├── Menu.jsx              # Cardápio público
-│   │       ├── admin/                # Gerenciar cardápio, estoque, funcionários, relatórios
-│   │       ├── attendant/            # Pedidos ativos e atualização de status
-│   │       └── customer/             # Fazer pedido, meus pedidos, feedback
+│   │       ├── Login.jsx
+│   │       ├── Register.jsx          # Formulário com validação completa por campo
+│   │       ├── Menu.jsx
+│   │       ├── admin/
+│   │       │   ├── Feedbacks.jsx
+│   │       │   ├── ManageMenu.jsx
+│   │       │   ├── ManageStaff.jsx
+│   │       │   ├── ManageStock.jsx
+│   │       │   ├── OrderHistory.jsx
+│   │       │   └── Reports.jsx
+│   │       ├── attendant/
+│   │       │   └── ActiveOrders.jsx
+│   │       └── customer/
+│   │           ├── MyOrders.jsx
+│   │           ├── PlaceOrder.jsx
+│   │           └── SubmitFeedback.jsx
 │   ├── .env.example
 │   ├── Dockerfile
 │   ├── nginx.conf
